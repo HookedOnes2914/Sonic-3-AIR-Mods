@@ -1,0 +1,28 @@
+{
+	"Metadata":
+	{
+		"Name": "Master System HUD",
+		"Author": "Hooked",
+		"Description": "Makes the HUD have the layout of the one from the Sega Master System games.",
+		"UniqueID": "MasterSystemHUD",
+		"ModVersion": "1.1.1"
+	},
+
+	"Settings":
+	{
+		"List":
+		[
+			{
+				"InternalName": "Ring Icon Animation",
+				"DisplayName": "Ring Icon Animation",
+				"Variable": "RingIconAnimation",
+				"DefaultValue": "0x00",
+				"Options":
+				{
+					"0x00": "Static",
+					"0x01": "Animated"
+				}
+			}
+		]
+	}
+}

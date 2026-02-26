@@ -1,0 +1,289 @@
+//#address-hook(0x00db44) end(0x00dbb2)
+
+// 0x00 - Static 
+// 0x01 - Animated
+global bool RingIconAnimation = 0x00
+
+function void RenderHUD()
+{
+#if STANDALONE
+
+	if (DEBUG_DISABLE_HUD)
+	{
+		return
+	}
+	
+#endif
+
+	s16 baseX = global.level_started
+	
+	if (baseX < 0)
+	{
+		baseX += 8
+		global.level_started = baseX
+	}
+	
+	baseX += 0x0f
+	s16 baseY = 0x01
+	u16 renderQueue = 0xe000
+	bool isBonusStage = (global.zone >= 0x13 && global.zone <= 0x15)
+
+	if !debug_mode.state
+	{
+		// Time
+		{
+			u16 frames = timer.frames
+			u16 minutes = timer.minutes
+			u16 seconds = timer.seconds
+			u16 centiseconds = (frames * 99 + 30) / 59
+			
+			if (hud.dirty.timer && !global.game.paused  && timer.alldata < 0x93b3b)
+			{
+				++frames
+				seconds += (frames / 60)
+				minutes += (seconds / 60)
+				frames %= 60
+				seconds %= 60
+			}
+
+			u16 px = (minutes >= 0) ? (baseX + 8) : baseX
+			
+			if !isBonusStage
+			{
+				if (minutes > 10)
+				{
+					HUD.drawDigit(minutes / 10, (px - 8) + 2, baseY + 24, renderQueue)
+				}
+				
+				HUD.drawDigit(minutes % 10, px + 2, baseY + 24, renderQueue)
+					
+				HUD.drawSprite("hud_char_colon", (px + 8) + 2, baseY + 24, renderQueue)
+			
+				HUD.drawDigit(seconds / 10, (px + 16) + 2, baseY + 24, renderQueue)
+				HUD.drawDigit(seconds % 10, (px + 24) + 2, baseY + 24, renderQueue)
+				
+				if Game.getSetting(SETTING_EXTENDED_HUD)
+				{
+					HUD.drawSprite("hud_char_colon", (px + 32) + 2, baseY + 24, renderQueue)
+					
+					HUD.drawDigit(centiseconds / 10, (px + 40) + 2, baseY + 24, renderQueue)
+					HUD.drawDigit(centiseconds % 10, (px + 48) + 2, baseY + 24, renderQueue)
+				}
+			}
+		}
+		
+		// Rings
+		{
+			bool hyper_ring_active = 0
+			bool isHyperRing = Mods.isModActive("Monitors +") && hyper_ring_active == true
+			u64 key = 0
+			
+			if RingIconAnimation == 0x00
+			{
+				if isHyperRing
+				{
+					key = "hud_hyper_ring_0x06"
+				}
+				
+				else
+				{
+					key = "hud_ring_0x06"
+				}
+			}
+			
+			else
+			{
+				if isHyperRing
+				{
+					key = stringformat("hud_hyper_ring_0x0%d", ( (static_rings.animframe * 8 + 7 - static_rings.animtimer) / 4) % 8) 
+				}
+				
+				else
+				{
+					key = stringformat("hud_ring_0x0%d", ( (static_rings.animframe * 8 + 7 - static_rings.animtimer) / 4) % 8) 
+				}
+			}
+			
+			Renderer.drawCustomSprite(key, baseX, 8, 0x00, SPRITE_FLAG_PRIO, renderQueue)
+
+			u16 px = baseX + 0x58
+			
+			for (u16 value = ring_counter;;)
+				{
+					A0 = u16[0xfffffe20]
+					u64 key2 = 0 // Tens place digit when rings < 10
+					u64 key3 = 0 // Regular rings digits
+					
+					if isHyperRing
+						{
+							key2 = "blue_hud_digit_0"
+							key3 = stringformat("blue_hud_digit_%d", value % 10)
+						}
+						
+						else
+						{
+							key2 = 0
+							key3 = value % 10
+						}
+					
+					if A0 < 10
+					{
+						if Game.getSetting(SETTING_EXTENDED_HUD)
+						{
+							if isHyperRing
+							{
+								Renderer.drawCustomSprite(key2, (px - 40) + 2, baseY + 8, 0, SPRITE_FLAG_PRIO, renderQueue)
+							}
+							
+							else
+							{
+								HUD.drawDigit(key2, (px - 40) + 2, baseY + 8, renderQueue)
+							}
+						}
+						
+						else
+						{
+							if isHyperRing
+							{
+								Renderer.drawCustomSprite(key2, (px - 64) + 2, baseY + 8, 0, SPRITE_FLAG_PRIO, renderQueue)
+							}
+							
+							else
+							{
+								HUD.drawDigit(key2, (px - 64) + 2, baseY + 8, renderQueue)
+							}
+						}
+					}
+					
+					if A0 >= 1000
+					{
+						if Game.getSetting(SETTING_EXTENDED_HUD)
+						{
+							if isHyperRing
+							{
+								Renderer.drawCustomSprite(key3, (px - 32) + 2, baseY + 8, 0, SPRITE_FLAG_PRIO, renderQueue)
+							}
+							
+							else
+							{
+								HUD.drawDigit(key3, (px - 32) + 2, baseY + 8, renderQueue)
+							}
+						}
+						
+						else
+						{
+							if isHyperRing
+							{
+								Renderer.drawCustomSprite(key3, (px - 48) + 2, baseY + 8, 0, SPRITE_FLAG_PRIO, renderQueue)
+							}
+							
+							else
+							{
+								HUD.drawDigit(key3, (px - 48) + 2, baseY + 8, renderQueue)
+							}
+						}
+					}
+				
+					else
+					{
+						if Game.getSetting(SETTING_EXTENDED_HUD)
+						{
+							if isHyperRing
+							{
+								Renderer.drawCustomSprite(key3, (px - 32) + 2, baseY + 8, 0, SPRITE_FLAG_PRIO, renderQueue)
+							}
+							
+							else
+							{
+								HUD.drawDigit(key3, (px - 32) + 2, baseY + 8, renderQueue)
+							}
+						}
+						
+						else
+						{
+							if isHyperRing
+							{
+								Renderer.drawCustomSprite(key3, (px - 56) + 2, baseY + 8, 0, SPRITE_FLAG_PRIO, renderQueue)
+							}
+							
+							else
+							{
+								HUD.drawDigit(key3, (px - 56) + 2, baseY + 8, renderQueue)
+							}
+						}
+					}
+					
+					px -= 8
+					value /= 10
+					
+					if (value == 0)
+					{
+						break
+					}
+				}
+		}
+
+		// Lives (not visible in Time Attack or with infinite lives setting)
+		{
+			if !Game.isTimeAttack() && !Game.getSetting(SETTING_INFINITE_LIVES)
+			{
+				
+				bool useMobilePosition = HUD.useMobileLivesDisplay()
+				u16 px = useMobilePosition ? getScreenWidth() - baseX - 41 : baseX
+				u16 py = useMobilePosition ? baseY + 7 : 200
+				string key
+
+				if u16[0xffffff08] == 0 || u16[0xffffff08] == 1
+				{
+					key = "hud_lives_icon_sonic"
+				}
+				
+				else if u16[0xffffff08] == 2
+				{
+					if Game.getSetting(SETTING_REGION_CODE) == 0x80
+					{
+						key = "hud_lives_icon_tails"
+					}
+					
+					else
+					{
+						key = "hud_lives_icon_miles"
+					}
+				}
+					
+				else if u16[0xffffff08] == 3
+				{
+					key = "hud_lives_icon_knuckles"
+				}
+				
+				else
+				{
+					key = Monitor.getIconSpriteKey(0x01)
+				}
+
+				Renderer.drawCustomSprite(key, px + 8, py + 8, 0, SPRITE_FLAG_PRIO, renderQueue)
+				
+				HUD.drawSprite("hud_lives_x", (px + 16) + 1, py + 8, renderQueue)
+				
+				if (lives_counter < 10)
+				{
+					HUD.drawDigit(u16(lives_counter % 10), (px + 24) + 2, py + 4, renderQueue)
+				}
+				
+				else
+				{
+					HUD.drawDigit(u16((lives_counter / 10) % 10), (px + 24) + 2, py + 4, renderQueue)
+					HUD.drawDigit(u16(lives_counter % 10), (px + 32) + 2, py + 4, renderQueue)
+				}
+			}
+		}
+
+		++renderQueue
+		
+	}
+	
+	else
+	{
+		base.RenderHUD()
+	}
+}

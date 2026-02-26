@@ -1,0 +1,25 @@
+{
+	"hud_ring_0x00":  { "File": "sprites.png", "Rect": "0,0,16,16", "Center": "0,0" },
+	"hud_ring_0x01":  { "File": "sprites.png", "Rect": "16,0,16,16", "Center": "0,0" },
+	"hud_ring_0x02":  { "File": "sprites.png", "Rect": "32,0,16,16", "Center": "0,0" },
+	"hud_ring_0x03":  { "File": "sprites.png", "Rect": "48,0,16,16", "Center": "0,0" },
+	"hud_ring_0x04":  { "File": "sprites.png", "Rect": "64,0,16,16", "Center": "0,0" },
+	"hud_ring_0x05":  { "File": "sprites.png", "Rect": "80,0,16,16", "Center": "0,0" },
+	"hud_ring_0x06":  { "File": "sprites.png", "Rect": "96,0,16,16", "Center": "0,0" },
+	"hud_ring_0x07":  { "File": "sprites.png", "Rect": "112,0,16,16", "Center": "0,0" },
+	
+	"hud_hyper_ring_0x00":  { "File": "sprites.png", "Rect": "0,16,16,16", "Center": "0,0" },
+	"hud_hyper_ring_0x01":  { "File": "sprites.png", "Rect": "16,16,16,16", "Center": "0,0" },
+	"hud_hyper_ring_0x02":  { "File": "sprites.png", "Rect": "32,16,16,16", "Center": "0,0" },
+	"hud_hyper_ring_0x03":  { "File": "sprites.png", "Rect": "48,16,16,16", "Center": "0,0" },
+	"hud_hyper_ring_0x04":  { "File": "sprites.png", "Rect": "64,16,16,16", "Center": "0,0" },
+	"hud_hyper_ring_0x05":  { "File": "sprites.png", "Rect": "80,16,16,16", "Center": "0,0" },
+	"hud_hyper_ring_0x06":  { "File": "sprites.png", "Rect": "96,16,16,16", "Center": "0,0" },
+	"hud_hyper_ring_0x07":  { "File": "sprites.png", "Rect": "112,16,16,16", "Center": "0,0" },
+	
+	"hud_lives_icon_sonic":  { "File": "sprites.png", "Rect": "0,32,16,16", "Center": "8,8" },
+	"hud_lives_icon_tails":  { "File": "sprites.png", "Rect": "16,32,16,16", "Center": "8,8" },
+	"hud_lives_icon_miles":  { "File": "sprites.png", "Rect": "16,32,16,16", "Center": "8,8" },
+	"hud_lives_icon_knuckles":  { "File": "sprites.png", "Rect": "32,32,16,16", "Center": "8,8" },
+	"hud_lives_x":  { "File": "sprites.png", "Rect": "48,32,8,8", "Center": "0,0" }
+}
