@@ -1,0 +1,12 @@
+include main
+
+// Health Display category
+global u8 Config.HealthCount
+global u8 Config.TotalHealthCount 
+global u8 Config.HealthDisplayType
+global bool Config.ShowUnobtainedHealthCount
+
+// Gameplay category
+global bool Config.CanLoseRings
+global bool Config.ReplaceShieldMonitor
+// global bool Config.ShieldAddHealthMethod

@@ -1,0 +1,105 @@
+{
+	"Metadata":
+	{
+		"Name": "Health System",
+		"UniqueID": "HealthSystem",
+		"Author": "Hooked",
+		"Description": "Replaces the ring loss system with a health system inspired by other platformers -- and games in general -- to satisfy that HATE for rings you have!",
+		"ModVersion": "1.0.1"
+	},
+	"Settings":
+	{
+		"List":
+		[
+			{
+				"InternalName": "HealthCount",
+				"DisplayName": "Starting Health Count",
+				"Variable": "Config.HealthCount",
+				"Category": "Health",
+				"DefaultValue": "0x03",
+				"Options":
+				{
+					"0x01": "1",
+					"0x02": "2",
+					"0x03": "3",
+					"0x04": "4",
+					"0x05": "5",
+					"0x06": "6",
+					"0x07": "7",
+					"0x08": "8"
+				}
+			},
+			
+			{
+				"InternalName": "TotalHealthCount",
+				"DisplayName": "Total Health Count",
+				"Variable": "Config.TotalHealthCount",
+				"Category": "Health",
+				"DefaultValue": "0x03",
+				"Options":
+				{
+					"0x01": "1",
+					"0x02": "2",
+					"0x03": "3",
+					"0x04": "4",
+					"0x05": "5",
+					"0x06": "6",
+					"0x07": "7",
+					"0x08": "8"
+				}
+			},
+			
+			{
+				"InternalName": "HealthDisplayType",
+				"DisplayName": "Health Display Type",
+				"Variable": "Config.HealthDisplayType",
+				"Category": "Health",
+				"DefaultValue": "0x00",
+				"Options":
+				{
+					"0x00": "Number",
+					"0x01": "Icon"
+				}
+			},
+			
+			{
+				"InternalName": "ShowUnobtainedHealthCount",
+				"DisplayName": "Show Unobtained Hit Points",
+				"Variable": "Config.ShowUnobtainedHealthCount",
+				"Category": "Health",
+				"DefaultValue": "0x01",
+				"Options":
+				{
+					"0x00": "No",
+					"0x01": "Yes"
+				}
+			},
+			
+			{
+				"InternalName": "CanLoseRings",
+				"DisplayName": "Lose Rings When Hit",
+				"Variable": "Config.CanLoseRings",
+				"Category": "Gameplay",
+				"DefaultValue": "0x00",
+				"Options":
+				{
+					"0x00": "No",
+					"0x01": "Yes"
+				}
+			},
+			
+			{
+				"InternalName": "ReplaceShieldMonitor",
+				"DisplayName": "Replace Shield Monitors",
+				"Variable": "Config.ReplaceShieldMonitor",
+				"Category": "Gameplay",
+				"DefaultValue": "0x01",
+				"Options":
+				{
+					"0x00": "No",
+					"0x01": "Yes"
+				}
+			}
+		]
+	}
+}

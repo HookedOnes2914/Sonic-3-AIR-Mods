@@ -1,0 +1,11 @@
+{
+	"hud_text_rings_red":  { "File": "hud.png", "Rect": "1,1,39,11", "Center": "0,-1" },
+	"hud_text_health":  { "File": "hud.png", "Rect": "41,1,45,11", "Center": "0,0" },
+	"hud_text_health_red":  { "File": "hud.png", "Rect": "87,1,45,11", "Center": "0,0" },
+	"hud_symbol_forward_slash":  { "File": "hud.png", "Rect": "133,1,5,11", "Center": "0,0" },
+	
+	"health_icon":  { "File": "hud.png", "Rect": "1,13,7,11", "Center": "0,0" },
+	"health_icon_empty":  { "File": "hud.png", "Rect": "9,13,7,11", "Center": "0,0" },
+	
+	"hud_health_object":  { "File": "hud.png", "Rect": "1,25,16,16", "Center": "0,0" }
+}
