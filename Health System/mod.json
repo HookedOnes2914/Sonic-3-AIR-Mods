@@ -5,7 +5,7 @@
 		"UniqueID": "HealthSystem",
 		"Author": "Hooked",
 		"Description": "Replaces the ring loss system with a health system inspired by other platformers -- and games in general -- to satisfy that HATE for rings you have!",
-		"ModVersion": "1.0.1"
+		"ModVersion": "2.0"
 	},
 	"Settings":
 	{
