@@ -1,3 +1,6 @@
 {
-	"monitor_icon_health": { "File": "monitor_icon_health.bmp", "Rect":"0,0,16,16",  "Center": "8,8" }
+	"monitor_icon_health": { "File": "monitor_icon_health.bmp", "Rect":"0,0,16,16",  "Center": "8,8" },
+	"monitor_icon_health_0": { "File": "monitor_icon_health.bmp", "Rect":"16,0,18,16",  "Center": "9,8" },
+	"monitor_icon_health_1": { "File": "monitor_icon_health.bmp", "Rect":"34,0,20,16",  "Center": "10,8" },
+	"monitor_icon_health_2": { "File": "monitor_icon_health.bmp", "Rect":"54,0,18,16",  "Center": "9,8" }
 }
