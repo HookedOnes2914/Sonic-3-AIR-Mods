@@ -1,0 +1,49 @@
+function bool Standalone.onWriteToSpriteTable(s16 px, s16 py, u16 renderQueue)
+{
+    if global.zone == 0x13
+    {
+        if (objA0.mapping_offset == 0x06148A) && objA0.update_address == 0x060ECE
+        {
+            objA0.animation.sprite = objA0.subtype2c + 8
+            
+            bool IsExtraLifeMonitorReplaced = (objA0.animation.sprite == 0x08 || objA0.animation.sprite == 0x08) && Config.HealthRegenerationType == 0x00 && GetMonitorReplacementID(Config.MonitorReplacement) == 0x01
+            bool IsRingsMonitorReplaced = (objA0.animation.sprite == 0x0A) && Config.HealthRegenerationType == 0x00 && GetMonitorReplacementID(Config.MonitorReplacement) == 0x03
+            bool IsFireShieldMonitorReplaced = (objA0.animation.sprite == 0x0D) && Config.HealthRegenerationType == 0x00 && (GetMonitorReplacementID(Config.MonitorReplacement) == 0x05 || GetMonitorReplacementID(Config.MonitorReplacement) == 0xFF)
+            bool IsLightningShieldMonitorReplaced = (objA0.animation.sprite == 0x0F) && Config.HealthRegenerationType == 0x00 && (GetMonitorReplacementID(Config.MonitorReplacement) == 0x06 || GetMonitorReplacementID(Config.MonitorReplacement) == 0xFF)
+            bool IsBubbleShieldMonitorReplaced = (objA0.animation.sprite == 0x0E) && Config.HealthRegenerationType == 0x00 && (GetMonitorReplacementID(Config.MonitorReplacement) == 0x07 || GetMonitorReplacementID(Config.MonitorReplacement) == 0xFF)
+
+            if IsExtraLifeMonitorReplaced || IsRingsMonitorReplaced || IsFireShieldMonitorReplaced || IsLightningShieldMonitorReplaced || IsBubbleShieldMonitorReplaced
+            {
+                Renderer.drawSprite("bonus_game_ball", px, py, 0, ((objA0.sprite_attributes & sprite_attribute.PRIORITY) ? SPRITE_FLAG_PRIO : 0), renderQueue)
+                return true
+            }
+
+            // debugLog(objA0.animation.sprite)
+        }
+    }
+    
+    else if global.zone == 0x14
+    {
+        if (objA0.mapping_offset == 0x06148A)
+        {
+            objA0.render_flags |= render_flag.WORLD
+            objA0.animation.sprite = objA0.subtype2c + 7
+
+            bool IsExtraLifeMonitorReplaced = (objA0.animation.sprite == 0x08) && Config.HealthRegenerationType == 0x00 && GetMonitorReplacementID(Config.MonitorReplacement) == 0x01
+            bool IsRingsMonitorReplaced = (objA0.animation.sprite == 0x0A) && Config.HealthRegenerationType == 0x00 && GetMonitorReplacementID(Config.MonitorReplacement) == 0x03
+            bool IsFireShieldMonitorReplaced = (objA0.animation.sprite == 0x0D) && Config.HealthRegenerationType == 0x00 && (GetMonitorReplacementID(Config.MonitorReplacement) == 0x05 || GetMonitorReplacementID(Config.MonitorReplacement) == 0xFF)
+            bool IsLightningShieldMonitorReplaced = (objA0.animation.sprite == 0x0F) && Config.HealthRegenerationType == 0x00 && (GetMonitorReplacementID(Config.MonitorReplacement) == 0x06 || GetMonitorReplacementID(Config.MonitorReplacement) == 0xFF)
+            bool IsBubbleShieldMonitorReplaced = (objA0.animation.sprite == 0x0E) && Config.HealthRegenerationType == 0x00 && (GetMonitorReplacementID(Config.MonitorReplacement) == 0x07 || GetMonitorReplacementID(Config.MonitorReplacement) == 0xFF)
+
+            if IsExtraLifeMonitorReplaced || IsRingsMonitorReplaced || IsFireShieldMonitorReplaced || IsLightningShieldMonitorReplaced || IsBubbleShieldMonitorReplaced
+            {
+                Renderer.drawSprite("bonus_game_ball", px, py, 0, objA0.render_flags, renderQueue)
+                return true
+            }
+
+            // debugLog(objA0.animation.sprite)
+        }
+    }
+
+	return base.Standalone.onWriteToSpriteTable(px, py, renderQueue)
+}
