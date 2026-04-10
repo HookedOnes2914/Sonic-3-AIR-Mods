@@ -77,21 +77,18 @@ function void SetHealthCount()
 	RingsCollected = 0
 	bool IsValidCheckpoint = !(checkpoint.number == 0x00 || (checkpoint.number == 0x01 && (global.zone_act == 0x0000 || global.zone_act == 0x0a00 || global.zone_act == 0x0700)) || (checkpoint.number == 0x07 && global.zone_act == 0x0701))
 
-	if checkpoint.number >= 0 && IsValidCheckpoint
+	if BonusGame.HealthCount > Save.HealthCount && ring_counter != 0
 	{
-		if BonusGame.HealthCount > Save.HealthCount && ring_counter != 0
-		{
-			HealthCount = BonusGame.HealthCount
-		}
+		HealthCount = BonusGame.HealthCount
+	}
 
-		else
-		{
-			BonusGame.HealthCount = 0
-			HealthCount = Save.HealthCount
-		}
+	else if checkpoint.number >= 0 && IsValidCheckpoint
+	{
+		BonusGame.HealthCount = 0
+		HealthCount = Save.HealthCount
 	}
 	
-	else
+	else if global.stage_type == 0 && global.in_extra_stage == 0
 	{
 		HealthCount = Config.HealthCount
 	}
