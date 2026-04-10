@@ -1,0 +1,143 @@
+// Rendering for the health display in the HUD
+//# address-hook(0x00db44) end(0x00dbb2)
+function void RenderHUD()
+{
+	#if STANDALONE
+		if (DEBUG_DISABLE_HUD)
+		{
+			return
+		}
+	
+	#endif
+		s16 baseX = global.level_started
+		
+		if (baseX < 0)
+		{
+			baseX += 8
+			global.level_started = baseX
+		}
+		
+		u16 renderQueue = 0xe000
+		bool isBonusStage = (global.zone >= 0x13 && global.zone <= 0x15)
+
+		baseX += 0x0f
+		s16 baseY 
+
+		if isBonusStage
+		{
+			baseY = -24
+		}
+
+		else
+		{
+			baseY = 8
+		}
+
+		if (!debug_mode.state)
+		{
+			bool show = (HealthCount > 1 || (level.framecounter & 0x08))
+			
+			if Mods.isModActive("Master System HUD") // Master System HUD compatibility
+			{
+				HUD.drawSprite("hud_health_object", baseX, baseY + 31, renderQueue)
+			}
+			
+			else
+			{
+				HUD.drawSprite(show ? "hud_text_health" : "hud_text_health_red", baseX, baseY + 48, renderQueue)
+			}
+			
+			for (u16 value = HealthCount;;)
+			{
+				if !Config.HealthDisplayType
+				{
+					if Mods.isModActive("Master System HUD") // Master System HUD compatibility
+					{
+						baseX = baseX - 30
+						baseY = baseY - 14
+					}
+					
+					HUD.drawDigit(value % 10, Game.getSetting(SETTING_EXTENDED_HUD) ? (Config.ShowUnobtainedHealthCount == 0x01 ? baseX + 74 : baseX + 88) : (Config.ShowUnobtainedHealthCount == 0x01 ? baseX + 50 : baseX + 64), baseY + 47, renderQueue)
+					
+					if Config.ShowUnobtainedHealthCount
+					{
+						HUD.drawSprite("hud_symbol_forward_slash", Game.getSetting(SETTING_EXTENDED_HUD) ? baseX + 82 : baseX + 58, baseY + 48, renderQueue)
+						HUD.drawDigit(Config.TotalHealthCount, Game.getSetting(SETTING_EXTENDED_HUD) ? baseX + 88 : baseX + 64, baseY + 47, renderQueue)
+					}
+					
+					baseX -= 8
+					value /= 10
+				}
+				
+				if Config.HealthDisplayType
+				{
+					if Mods.isModActive("Master System HUD") // Master System HUD compatibility
+					{
+						baseX = baseX - 38
+						baseY = baseY - 14
+					}
+					
+					if Config.ShowUnobtainedHealthCount
+					{
+
+						if value < 0x01 && Config.TotalHealthCount >= 0x01
+						{
+							HUD.drawSprite("health_icon_empty", baseX + 64, baseY + 48, renderQueue)
+						}
+						
+						if value < 0x02 && Config.TotalHealthCount >= 0x02
+						{
+							HUD.drawSprite("health_icon_empty", baseX + 72, baseY + 48, renderQueue)
+						}
+						
+						if value < 0x03 && Config.TotalHealthCount >= 0x03
+						{
+							HUD.drawSprite("health_icon_empty", baseX + 80, baseY + 48, renderQueue)
+						}
+						
+						if value < 0x04 && Config.TotalHealthCount >= 0x04
+						{
+							HUD.drawSprite("health_icon_empty", baseX + 88, baseY + 48, renderQueue)
+						}
+						
+						if value < 0x05 && Config.TotalHealthCount >= 0x05
+						{
+							HUD.drawSprite("health_icon_empty", baseX + 96, baseY + 48, renderQueue)
+						}
+						
+						if value < 0x06 && Config.TotalHealthCount >= 0x06
+						{
+							HUD.drawSprite("health_icon_empty", baseX + 104, baseY + 48, renderQueue)
+						}
+						
+						if value < 0x07 && Config.TotalHealthCount >= 0x07
+						{
+							HUD.drawSprite("health_icon_empty", baseX + 112, baseY + 48, renderQueue)
+						}
+						
+						if value < 0x08 && Config.TotalHealthCount >= 0x08
+						{
+							HUD.drawSprite("health_icon_empty", baseX + 120, baseY + 48, renderQueue)
+						}
+					}
+
+					for (u8 i = 0; i < value; ++i)
+					{
+						HUD.drawSprite("health_icon", baseX + 64, baseY + 48, renderQueue)
+						baseX += 8
+					}
+					
+					value /= 10
+				}
+					
+				if (value == 0)
+				{
+					break
+				}
+			}
+		}
+		
+		++renderQueue
+
+	base.RenderHUD()
+}

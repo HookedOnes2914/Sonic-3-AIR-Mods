@@ -1,0 +1,140 @@
+// Health logic
+//# address-hook(0x010294) end(0x010364)
+function void Character.GettingHurt()
+{	
+	bool canLoseShield = true	// Usually true, gets false e.g. for 2nd player Tails
+	bool isProtectedByObject = ((char.protection_flag & 0x80) != 0)
+	bool spilledRings = false
+	u16 rings = ring_counter
+	
+	if !(A0 == 0xffffb000)
+	{
+		// It's the second player
+		if competition_mode.active
+		{
+			rings = u16[0xfffffed0]
+		}
+		else
+		{
+			canLoseShield = false
+		}
+	}
+
+	else if A0 == 0xffffb000
+	{
+		if (!isProtectedByObject)
+		{
+			HealthCount -= 1
+			
+			if HealthCount >= Config.TotalHealthCount
+			{
+				HealthCount = Config.TotalHealthCount
+			}
+			
+			if HealthCount <= 0
+			{
+				HealthCount = 0
+				BonusGame.HealthCount = 0
+				D0 = getSoundIdByObstacleAddress(u32[A2])
+				Character.Die()
+				return
+			}
+			
+			if Config.CanLoseRings
+			{
+				// Create ring spill object
+				if (allocDynamicObjectStd())
+				{
+					objA1.update_address = 0x01a64a
+					objA1.position.x.u16 = char.position.x.u16
+					objA1.position.y.u16 = char.position.y.u16
+					u16[A1 + 0x3e] = A0.u16
+				}
+				
+				rings = 0
+				spilledRings = true
+				RingsCollected = 0
+			}
+			
+			else
+			{
+				rings = rings
+				spilledRings = false
+			}
+			
+			// Should be unnecessary, but make sure all shield flags are cleared
+			char.bonus_effect &= ~char.bonus.ALL_SHIELDS
+		}
+		
+		else
+		{
+			#if STANDALONE
+				// When using e.g. the MGZ spinning top, do not lose your shield
+				if (!isProtectedByObject)
+			#endif
+				{
+					// Lose shield
+					char.bonus_effect &= ~char.bonus.ALL_SHIELDS
+				}
+		}
+
+		char.base_state = base_state.HURT
+		Character.LandingOnGroundNoSpindash()
+		char.flags |= char.flag.IN_AIR
+		if (char.flags & char.flag.UNDERWATER)
+		{
+			char.velocity.x = -0x100
+			char.velocity.y = -0x200
+		}
+		else
+		{
+			char.velocity.x = -0x200
+			char.velocity.y = -0x400
+		}
+		if (char.position.x.u16 >= u16[A2 + 0x10])
+		{
+			char.velocity.x = -char.velocity.x
+		}
+
+		char.groundspeed = 0
+		char.state = char.state.GOT_HURT
+		char.invuln.countdown = 120
+
+		#if STANDALONE
+			if (char.character == CHARACTER_SONIC)
+			{
+				// Reset drop dash
+				sonic.dropdash_counter = 0
+			}
+
+			// In standalone, don't play the sound when rings got spilled
+			//  -> This check is not necessary in emulation, as the ring spill sound kills this one (only one of both can be played)
+			if (!spilledRings)
+		#endif
+			{
+				playSound(getSoundIdByObstacleAddress(u32[A2]))
+			}
+			D0 = 0xffffffff
+	}
+}
+
+//# address-hook(0x0123c2) end(0x01257a)
+function void Character.CheckDiedStateEnd()
+{
+	if A0 == 0xffffb000
+	{
+		base.Character.CheckDiedStateEnd()
+		HealthCount = 0
+		BonusGame.HealthCount = 0
+	}
+}
+
+function void Character.UpdateDrownedState.shared()
+{
+	if A0 == 0xffffb000
+	{
+		base.Character.UpdateDrownedState.shared()
+		HealthCount = 0
+		BonusGame.HealthCount = 0
+	}
+}

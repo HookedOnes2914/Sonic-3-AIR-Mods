@@ -1,113 +1,66 @@
 include config
 
+include logic
+include hud
+include regeneration
+include renderhooks
+
 global s8 HealthCount
 global s8 Save.HealthCount
+global s8 BonusGame.HealthCount
 
-function void Debug()
+global u16 RingsCollected
+
+#define HEALTH_SYSTEM_ACTIVE = 1
+
+function void waitForNextFrame() // Debug logs are always being updated
 {
-	debugLog(Config.HealthCount)
-	debugLog(Config.TotalHealthCount)
-	debugLog(HealthCount)
-	debugLog(Save.HealthCount)
-	
-	/*
-	debugLog(global.characters)
-	debugLog(u8[0xffffe654])
-	debugLog(u16[0xffffff08])
-	
-	#if EXTRA_CHARACTER_FRAMEWORK_ACTIVE
-		debugLog(global_ExChar_P1)
-	#endif
-	*/
+    base.waitForNextFrame()
+
+	bool IsValidCheckpoint = !(checkpoint.number == 0x00 || (checkpoint.number == 0x01 && (global.zone_act == 0x0000 || global.zone_act == 0x0a00 || global.zone_act == 0x0700)) || (checkpoint.number == 0x07 && global.zone_act == 0x0701))
+
+    debugLog(stringformat("Config.HealthCount: %d", Config.HealthCount))
+	debugLog(stringformat("Config.TotalHealthCount: %d", Config.TotalHealthCount))
+	debugLog(stringformat("HealthCount: %d", HealthCount))
+	debugLog(stringformat("Save.HealthCount: %d", Save.HealthCount))
+	debugLog(stringformat("BonusGame.HealthCount: %d", BonusGame.HealthCount))
+	debugLog("")
+	debugLog(stringformat("Config.HealthRegenerationType: %d", Config.HealthRegenerationType))
+	debugLog(stringformat("Config.MonitorReplacement: %d", Config.MonitorReplacement))
+	debugLog(stringformat("GetMonitorReplacementID(Config.MonitorReplacement): %d", GetMonitorReplacementID(Config.MonitorReplacement)))
+	debugLog(stringformat("Config.RingRequirement: %d", Config.RingRequirement))
+	debugLog(stringformat("Config.CanLoseRings: %d", Config.CanLoseRings))
+	debugLog("")
+	debugLog(stringformat("Able to save health count?: %d", checkpoint.number >= 0 && IsValidCheckpoint))
+	debugLog("")
+	debugLog(stringformat("ring_counter: %d", ring_counter))
+	debugLog(stringformat("RingsCollected: %d", RingsCollected))
 }
 
-// Initialize health count when spawning / respawning
+// Set health count when spawning / respawning
 function void initializeMainGame()
 {
 	base.initializeMainGame()
-	// Debug()
-	
-	if checkpoint.number == 0
-	{
-		HealthCount = Config.HealthCount
-	}
-	
-	else
-	{
-		HealthCount = Save.HealthCount
-	}
-	
-	if Config.HealthCount > Config.TotalHealthCount
-	{
-		Config.HealthCount = Config.TotalHealthCount
-	}
+	SetHealthCount()
 }
 
 function void Standalone.onLevelStart()
 {
 	base.Standalone.onLevelStart()
-	// Debug()
-	
-	if checkpoint.number == 0
-	{
-		HealthCount = Config.HealthCount
-	}
-	
-	else
-	{
-		HealthCount = Save.HealthCount
-	}
-	
-	if Config.HealthCount > Config.TotalHealthCount
-	{
-		Config.HealthCount = Config.TotalHealthCount
-	}
+	SetHealthCount()
 }
 
 function void Standalone.onLevelFinished()
 {
 	base.Standalone.onLevelFinished()
-	// Debug()
-	HealthCount = Config.HealthCount
-	Save.HealthCount = HealthCount
-	
-	if HealthCount > Config.TotalHealthCount
-	{
-		HealthCount = Config.TotalHealthCount
-	}
+	SetHealthCount()
 }
 
 //# address-hook(0x02d234) end(0x02d336)
 function void SetupCharacterAtLastCheckpoint()
 {
 	base.SetupCharacterAtLastCheckpoint()
-	// Debug()
-	
-	if (global.stage_type == 0)
-	{
-		if (global.in_extra_stage)
-		{
-			HealthCount = Save.HealthCount
-		}
-		else
-		{
-			HealthCount = Config.HealthCount
-	
-			if Config.HealthCount > Config.TotalHealthCount
-			{
-				Config.HealthCount = Config.TotalHealthCount
-			}
-		}
-	}
-	else
-	{
-		HealthCount = Config.HealthCount
-	
-		if Config.HealthCount > Config.TotalHealthCount
-		{
-			Config.HealthCount = Config.TotalHealthCount
-		}
-	}
+	SetHealthCount()
 }
 
 //# address-hook(0x02d176)
@@ -117,589 +70,68 @@ function void Checkpoint.SaveCurrentState()
 	Save.HealthCount = HealthCount
 }
 
-// Health logic
-//# address-hook(0x010294) end(0x010364)
-function void Character.GettingHurt()
+function void SetHealthCount()
 {
-	// Debug()
-	
-	bool canLoseShield = true	// Usually true, gets false e.g. for 2nd player Tails
-	bool isProtectedByObject = ((char.protection_flag & 0x80) != 0)
-	bool spilledRings = false
-	u16 rings = ring_counter
-	
-	u16 Player1 = A0 == 0xffffb000
-	
-	if !Player1
+	RingsCollected = 0
+	bool IsValidCheckpoint = !(checkpoint.number == 0x00 || (checkpoint.number == 0x01 && (global.zone_act == 0x0000 || global.zone_act == 0x0a00 || global.zone_act == 0x0700)) || (checkpoint.number == 0x07 && global.zone_act == 0x0701))
+
+	if checkpoint.number >= 0 && IsValidCheckpoint
 	{
-		// It's the second player
-		if competition_mode.active
+		if BonusGame.HealthCount > Save.HealthCount && ring_counter != 0
 		{
-			rings = u16[0xfffffed0]
+			HealthCount = BonusGame.HealthCount
 		}
+
 		else
 		{
-			canLoseShield = false
-		}
-	}
-
-	else if Player1
-	{
-		if (!isProtectedByObject)
-		{
-			HealthCount -= 1
-			
-			if HealthCount >= Config.TotalHealthCount
-			{
-				HealthCount = Config.TotalHealthCount
-			}
-			
-			if HealthCount <= 0
-			{
-				HealthCount = 0
-				D0 = getSoundIdByObstacleAddress(u32[A2])
-				Character.Die()
-				return
-			}
-			
-			if Config.CanLoseRings == 0x01
-			{
-				// Create ring spill object
-				if (allocDynamicObjectStd())
-				{
-					objA1.update_address = 0x01a64a
-					objA1.position.x.u16 = char.position.x.u16
-					objA1.position.y.u16 = char.position.y.u16
-					u16[A1 + 0x3e] = A0.u16
-				}
-				
-				rings = 0
-				spilledRings = true
-			}
-			
-			else
-			{
-				rings = rings
-				spilledRings = false
-			}
-			
-			// Should be unnecessary, but make sure all shield flags are cleared
-			char.bonus_effect &= ~char.bonus.ALL_SHIELDS
-		}
-		
-		else
-		{
-			#if STANDALONE
-				// When using e.g. the MGZ spinning top, do not lose your shield
-				if (!isProtectedByObject)
-			#endif
-				{
-					// Lose shield
-					char.bonus_effect &= ~char.bonus.ALL_SHIELDS
-				}
-		}
-
-		char.base_state = base_state.HURT
-		Character.LandingOnGroundNoSpindash()
-		char.flags |= char.flag.IN_AIR
-		if (char.flags & char.flag.UNDERWATER)
-		{
-			char.velocity.x = -0x100
-			char.velocity.y = -0x200
-		}
-		else
-		{
-			char.velocity.x = -0x200
-			char.velocity.y = -0x400
-		}
-		if (char.position.x.u16 >= u16[A2 + 0x10])
-		{
-			char.velocity.x = -char.velocity.x
-		}
-
-		char.groundspeed = 0
-		char.state = char.state.GOT_HURT
-		char.invuln.countdown = 120
-
-		#if STANDALONE
-			if (char.character == CHARACTER_SONIC)
-			{
-				// Reset drop dash
-				sonic.dropdash_counter = 0
-			}
-
-			// In standalone, don't play the sound when rings got spilled
-			//  -> This check is not necessary in emulation, as the ring spill sound kills this one (only one of both can be played)
-			if (!spilledRings)
-		#endif
-			{
-				playSound(getSoundIdByObstacleAddress(u32[A2]))
-			}
-			D0 = 0xffffffff
-	}
-}
-
-//# address-hook(0x0123c2) end(0x01257a)
-function void Character.CheckDiedStateEnd()
-{
-	u16 Player1 = A0 == 0xffffb000
-	
-	if Player1
-	{
-		base.Character.CheckDiedStateEnd()
-		// Debug()
-		HealthCount = 0
-	}
-}
-
-/*
-//# address-hook(0x0116de) end(0x011748)
-//# address-hook(0x014f08) end(0x014f72)
-function void Character.CheckAgainstMoveBorders()
-{
-	base.Character.CheckAgainstMoveBorders()
-	// Debug()
-	
-	u16 Player1 = A0 == 0xffffb000
-	
-	// Check y-position as well
-	if (!global.passing_floor) && Player1
-	{
-		bool hitBottom = 0
-		if (global.inv_gravity)
-		{
-			D0.s16 = level.vertical_wrap
-			hitBottom = (s16(char.position.y.u16) <= D0.s16)
-		}
-		else
-		{
-			D0.s16 = move_area.bottom.current + getScreenHeight()
-			hitBottom = (s16(char.position.y.u16) > D0.s16)
-		}
-
-		if (hitBottom)
-		{
-			// Bottomless pit kills Sonic
-			HealthCount = 0
-			Character.Die()
-		}
-	}
-}
-*/
-
-function void Character.UpdateDrownedState.shared()
-{
-	u16 Player1 = A0 == 0xffffb000
-	
-	if Player1
-	{
-		base.Character.UpdateDrownedState.shared()
-		// Debug()
-		HealthCount = 0
-	}
-}
-
-// Rendering for the health display in the HUD
-//# address-hook(0x00db44) end(0x00dbb2)
-function void RenderHUD()
-{
-	#if STANDALONE
-		if (DEBUG_DISABLE_HUD)
-		{
-			return
-		}
-	
-	#endif
-		s16 baseX = global.level_started
-		
-		if (baseX < 0)
-		{
-			baseX += 8
-			global.level_started = baseX
-		}
-		
-		baseX += 0x0f
-		s16 baseY = 0x08
-		
-		u16 renderQueue = 0xe000
-		bool isBonusStage = (global.zone >= 0x13 && global.zone <= 0x15)
-
-		if (!debug_mode.state)
-		{
-			if (!isBonusStage)
-			{
-				bool show = (HealthCount > 1 || (level.framecounter & 0x08))
-				
-				if Mods.isModActive("Master System HUD") // Master System HUD compatibility
-				{
-					HUD.drawSprite("hud_health_object", baseX, baseY + 31, renderQueue)
-				}
-				
-				else
-				{
-					HUD.drawSprite(show ? "hud_text_health" : "hud_text_health_red", baseX, baseY + 48, renderQueue)
-				}
-				
-				for (u16 value = HealthCount;;)
-				{
-					if Config.HealthDisplayType == 0x00
-					{
-						if Mods.isModActive("Master System HUD") // Master System HUD compatibility
-						{
-							baseX = baseX - 30
-							baseY = baseY - 14
-						}
-						
-						HUD.drawDigit(value % 10, Game.getSetting(SETTING_EXTENDED_HUD) ? (Config.ShowUnobtainedHealthCount == 0x01 ? baseX + 74 : baseX + 88) : (Config.ShowUnobtainedHealthCount == 0x01 ? baseX + 50 : baseX + 64), baseY + 47, renderQueue)
-						
-						if Config.ShowUnobtainedHealthCount == 0x01
-						{
-							HUD.drawSprite("hud_symbol_forward_slash", Game.getSetting(SETTING_EXTENDED_HUD) ? baseX + 82 : baseX + 58, baseY + 48, renderQueue)
-							HUD.drawDigit(Config.TotalHealthCount, Game.getSetting(SETTING_EXTENDED_HUD) ? baseX + 88 : baseX + 64, baseY + 47, renderQueue)
-						}
-						
-						baseX -= 8
-						value /= 10
-					}
-					
-					if Config.HealthDisplayType == 0x01
-					{
-						if Mods.isModActive("Master System HUD") // Master System HUD compatibility
-						{
-							baseX = baseX - 38
-							baseY = baseY - 14
-						}
-						
-						if Config.ShowUnobtainedHealthCount == 0x01
-						{
-							if value < 0x01 && Config.TotalHealthCount >= 0x01
-							{
-								HUD.drawSprite("health_icon_empty", baseX + 64, baseY + 48, renderQueue)
-							}
-							
-							if value < 0x02 && Config.TotalHealthCount >= 0x02
-							{
-								HUD.drawSprite("health_icon_empty", baseX + 72, baseY + 48, renderQueue)
-							}
-							
-							if value < 0x03 && Config.TotalHealthCount >= 0x03
-							{
-								HUD.drawSprite("health_icon_empty", baseX + 80, baseY + 48, renderQueue)
-							}
-							
-							if value < 0x04 && Config.TotalHealthCount >= 0x04
-							{
-								HUD.drawSprite("health_icon_empty", baseX + 88, baseY + 48, renderQueue)
-							}
-							
-							if value < 0x05 && Config.TotalHealthCount >= 0x05
-							{
-								HUD.drawSprite("health_icon_empty", baseX + 96, baseY + 48, renderQueue)
-							}
-							
-							if value < 0x06 && Config.TotalHealthCount >= 0x06
-							{
-								HUD.drawSprite("health_icon_empty", baseX + 104, baseY + 48, renderQueue)
-							}
-							
-							if value < 0x07 && Config.TotalHealthCount >= 0x07
-							{
-								HUD.drawSprite("health_icon_empty", baseX + 112, baseY + 48, renderQueue)
-							}
-							
-							if value < 0x08 && Config.TotalHealthCount >= 0x08
-							{
-								HUD.drawSprite("health_icon_empty", baseX + 120, baseY + 48, renderQueue)
-							}
-						}
-						
-						if value >= 0x01
-						{
-							HUD.drawSprite("health_icon", baseX + 64, baseY + 48, renderQueue)
-							//baseX + 26, 42
-						}
-						
-						if value >= 0x02
-						{
-							HUD.drawSprite("health_icon", baseX + 72, baseY + 48, renderQueue)
-						}
-						
-						if value >= 0x03
-						{
-							HUD.drawSprite("health_icon", baseX + 80, baseY + 48, renderQueue)
-						}
-						
-						if value >= 0x04
-						{
-							HUD.drawSprite("health_icon", baseX + 88, baseY + 48, renderQueue)
-						}
-						
-						if value >= 0x05
-						{
-							HUD.drawSprite("health_icon", baseX + 96, baseY + 48, renderQueue)
-						}
-						
-						if value >= 0x06
-						{
-							HUD.drawSprite("health_icon", baseX + 104, baseY + 48, renderQueue)
-						}
-						
-						if value >= 0x07
-						{
-							HUD.drawSprite("health_icon", baseX + 112, baseY + 48, renderQueue)
-						}
-						
-						if value >= 0x08
-						{
-							HUD.drawSprite("health_icon", baseX + 120, baseY + 48, renderQueue)
-						}
-						
-						baseX -= 8
-						value /= 10
-					}
-						
-					if (value == 0)
-					{
-						break
-					}
-					
-					
-				}
-			}
-		}
-		
-		++renderQueue
-
-	base.RenderHUD()
-}
-
-// Health monitor code
-function u64 Monitor.getIconSpriteKey(u8 type)
-{
-	bool Shields = (type == 0x05 || type == 0x06 || type == 0x07 || type == 0x0b) || ((type == 0x22 || type == 0x23 || type == 0x25 || type == 0x26) && Mods.isModActive("Monitors +"))
-	bool isReplaceShieldMonitors = Shields && Config.ReplaceShieldMonitor == 0x01
-	
-	if type == 0x00
-	{
-		return "monitor_icon_static"
-	}
-	
-	else if type == 0x01
-	{
-		return getMainCharacter() == CHARACTER_SONIC ? "monitor_icon_sonic" : getMainCharacter() == CHARACTER_TAILS ? "monitor_icon_tails" : "monitor_icon_knuckles"
-	}
-	
-	else if type == 0x02
-	{
-		return "monitor_icon_robotnik"
-	}
-	
-	else if type == 0x03
-	{
-		return "monitor_icon_ring"
-	}
-	
-	else if type == 0x04
-	{
-		return "monitor_icon_speedshoes"
-	}
-	
-	else if type == 0x05 && !isReplaceShieldMonitors
-	{
-		return "monitor_icon_fireshield"
-	}
-	
-	else if type == 0x06 && !isReplaceShieldMonitors
-	{
-		return "monitor_icon_lightningshield"
-	}
-	
-	else if type == 0x07 && !isReplaceShieldMonitors
-	{
-		return "monitor_icon_bubbleshield"
-	}
-	
-	else if type == 0x08
-	{
-		return "monitor_icon_invincibility"
-	}
-	
-	else if type == 0x09
-	{
-		return "monitor_icon_super"
-	}
-	
-	else if type == 0x0b && !isReplaceShieldMonitors
-	{
-		return "monitor_icon_classicshield"
-	}
-	
-	// Monitors + compatibility
-	if Mods.isModActive("Monitors +")
-	{
-		bool option.type_rand
-		
-		if (option.type_rand == 1 && Game.getSetting(SETTING_RANDOM_MONITORS) == 2 && type != 0x00 && !debug_mode.state && objA0.value39 != 0x01) || type == 0x0d
-		{
-			return "monitor_icon_random"            
-		}
-	
-		else if type == 0x0e						
-		{
-			return "monitor_icon_random_ring"
-		}
-		
-		else if type == 0x0f				
-		{
-			return "monitor_icon_hyper_ring"
-		}
-		
-		else if type == 0x20						
-		{
-			return "monitor_icon_multi_ring"
-		}
-		
-		else if type == 0x21
-		{
-			return "monitor_icon_grey_sneakers"
-		}
-		
-		else if type == 0x22 && !isReplaceShieldMonitors				
-		{
-			return "monitor_icon_gold_shield"
-		}
-		
-		else if type == 0x23 && !isReplaceShieldMonitors				
-		{
-			return "monitor_icon_ice_shield"
-		}
-		else if type == 0x24						
-		{
-			return "monitor_icon_goggles"
-		}
-		
-		else if type == 0x25 && !isReplaceShieldMonitors
-		{
-			return "monitor_icon_wind_shield"
-		}
-		
-		else if type == 0x26 && !isReplaceShieldMonitors
-		{
-			return "monitor_icon_orbinaut_shield"
-		}
-	}
-	
-	if isReplaceShieldMonitors || type == 0x0c 
-	{
-		return "monitor_icon_health"
-	}
-	
-	return 0
-}
-
-//# address-hook(0x01d5dc) end(0x01d616)
-function void MonitorIntact.UpdateDefault()
-{
-	base.MonitorIntact.UpdateDefault()
-	
-	u8 ShieldMonitors = (objA0.subtype2c == 0x05 || objA0.state == 0x05) || (objA0.subtype2c == 0x06 || objA0.state == 0x06) || (objA0.subtype2c == 0x07 || objA0.state == 0x07) || (objA0.subtype2c == 0x0b || objA0.state == 0x0b)
-	u8 MonitorsPlus.ShieldMonitors = ((objA0.subtype2c == 0x22 || objA0.state == 0x22) || (objA0.subtype2c == 0x23 || objA0.state == 0x23) || (objA0.subtype2c == 0x25 || objA0.state == 0x25) || (objA0.subtype2c == 0x26 || objA0.state == 0x26)) && Mods.isModActive("Monitors +") // Monitors + compatibility
-	bool isReplaceShieldMonitors = Config.ReplaceShieldMonitor == 0x01
-	
-	if ((ShieldMonitors || MonitorsPlus.ShieldMonitors) && isReplaceShieldMonitors) || objA0.subtype2c == 0x0c	
-	{	
-		objA0.subtype2c = 0x0c
-		objA0.state = 0x01
-	}
-}
-
-//# address-hook(0x01d820) end(0x01d878)
-function void ItemEffect.UpdateDefaultInternal()
-{
-	objA0.value39 = 0x01
-	
-	if (objA0.subtype2c == 0x0c || objA0.state == 0x0c)
-	{
-		if ((objA0.render_flags & render_flag.FLIP_Y) == 0)
-		{
-			if (objA0.velocity.y < 0)
-			{
-				UpdateMovementStraightSimple()
-				objA0.velocity.y += 0x18
-				return
-			}
-		}
-		else
-		{
-			if (objA0.velocity.y >= 0)
-			{
-				UpdateMovementStraightSimple()
-				objA0.velocity.y -= 0x18
-				return
-			}
-		}
-		
-		objA0.base_state += 2
-		u16[A0 + 0x24] = 0x1d
-
-		A1 = 0xffff0000 + objA0.monitor.character_address
-		A2 = (A1 == 0xffffb000) ? 0xfffffecc : 0xfffffece		// Address to keep count of broken monitors in. having different ones for each player is a leftover from Sonic 2
-		
-		++u16[A2]
-
-		HealthCount += 1
-		
-		if HealthCount <= Config.TotalHealthCount
-		{
-			playSound(0x65)	 // Blue sphere collect sound
-		}
-		
-		else
-		{
-			HealthCount = Config.TotalHealthCount
-			playSound(0x7B) // Some kind of bounce sound idk what it is
-			// playSound(0xB2) - Incorrect sound (alternate sound)
+			BonusGame.HealthCount = 0
+			HealthCount = Save.HealthCount
 		}
 	}
 	
 	else
 	{
-		base.ItemEffect.UpdateDefaultInternal()
+		HealthCount = Config.HealthCount
+	}
+	
+	if Config.HealthCount > Config.TotalHealthCount || BonusGame.HealthCount > Config.TotalHealthCount
+	{
+		Config.HealthCount = Config.TotalHealthCount
 	}
 }
 
-function void ItemEffect.applyShield(u8 shieldType, u32 updateRoutine, u8 soundId)
+function void AddHealthCount()
 {
-	u8 ShieldMonitors = (objA0.subtype2c == 0x05 || objA0.state == 0x05) || (objA0.subtype2c == 0x06 || objA0.state == 0x06) || (objA0.subtype2c == 0x07 || objA0.state == 0x07) || (objA0.subtype2c == 0x0b || objA0.state == 0x0b)
-	u8 MonitorsPlus.ShieldMonitors = ((objA0.subtype2c == 0x22 || objA0.state == 0x22) || (objA0.subtype2c == 0x23 || objA0.state == 0x23) || (objA0.subtype2c == 0x25 || objA0.state == 0x25) || (objA0.subtype2c == 0x26 || objA0.state == 0x26)) && Mods.isModActive("Monitors +") // Monitors + compatibility
-	u8 ShieldType = char.bonus.ANY_SHIELD && u8[0xffffb02b] & char.bonus.ALL_SHIELDS // (char.bonus.SHIELD_FIRE && u8[0xffffb02b] & char.bonus.SHIELD_FIRE) || (char.bonus.SHIELD_LIGHTNING && u8[0xffffb02b] & char.bonus.SHIELD_LIGHTNING) || (char.bonus.SHIELD_BUBBLE && u8[0xffffb02b] & char.bonus.SHIELD_BUBBLE) || (0 && u8[0xffffb02b] & char.bonus.ANY_SHIELD)
-	bool isReplaceShieldMonitors = Config.ReplaceShieldMonitor == 0x01
-	
-	// Makes it so if you get another shield while already having one, your health count increases.
-	if !ShieldType && Config.ReplaceShieldMonitor == 0x00
+	HealthCount += 1
+
+	if global.stage_type == 2 && global.in_extra_stage == 1 // && (global.zone == 0x13 || global.zone == 0x14)
 	{
-		HealthCount = HealthCount
+		BonusGame.HealthCount = HealthCount
 	}
-	
-	else if (isReplaceShieldMonitors || ShieldType) && HealthCount <= Config.TotalHealthCount
+
+	if Config.HealthRegenerationType == 0x01
 	{
-		HealthCount += 1
-		
-		if HealthCount <= Config.TotalHealthCount
+		if RingsCollected > Config.RingRequirement
 		{
-			playSound(0x65)	 // Blue sphere collect sound
+			RingsCollected = ring_counter % Config.RingRequirement
 		}
-		
+
 		else
 		{
-			HealthCount = Config.TotalHealthCount
-			playSound(0x7B) // Some kind of bounce sound idk what it is
-			// playSound(0xB2) - Incorrect sound (alternate sound)
+			RingsCollected = 0
 		}
 	}
+		
+	if HealthCount <= Config.TotalHealthCount || BonusGame.HealthCount <= Config.TotalHealthCount
+	{
+		playSound(0x65)	 // Bonus game ball appear sound
+	}
 	
-	base.ItemEffect.applyShield(shieldType, updateRoutine, soundId)
+	else
+	{
+		HealthCount = Config.TotalHealthCount
+		BonusGame.HealthCount = Config.TotalHealthCount
+		playSound(0x7B) // Black bonus game ball bounce sound
+		// playSound(0xB2) - Incorrect sound (alternate sound)
+	}
 }
-	
-	
-	

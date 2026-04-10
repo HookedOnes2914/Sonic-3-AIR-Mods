@@ -1,0 +1,465 @@
+// Health regeneration code
+function u8 GetMonitorReplacementID(u8 type)
+{
+	if type == 0x00
+	{
+		return 0x2A
+	}
+
+	else if type == 0x01
+	{
+		return 0xFF
+	}
+
+	else if type == 0x09
+	{
+		return 0x0B
+	}
+
+	else if type == 0x0A || type == 0x0B
+	{
+		return type - 2
+	}
+
+	else
+	{
+		return type - 1
+	}
+}
+
+function u64 Monitor.getIconSpriteKey(u8 type)
+{
+	if type == 0x00
+	{
+		return "monitor_icon_static"
+	}
+	
+	else if type == 0x01
+	{
+		return getMainCharacter() == CHARACTER_SONIC ? "monitor_icon_sonic" : getMainCharacter() == CHARACTER_TAILS ? "monitor_icon_tails" : "monitor_icon_knuckles"
+	}
+	
+	else if type == 0x02 
+	{
+		return "monitor_icon_robotnik"
+	}
+	
+	else if type == 0x03
+	{
+		return "monitor_icon_ring"
+	}
+	
+	else if type == 0x04
+	{
+		return "monitor_icon_speedshoes"
+	}
+	
+	else if type == 0x05
+	{
+		return "monitor_icon_fireshield"
+	}
+	
+	else if type == 0x06
+	{
+		return "monitor_icon_lightningshield"
+	}
+	
+	else if type == 0x07
+	{
+		return "monitor_icon_bubbleshield"
+	}
+	
+	else if type == 0x08 
+	{
+		return "monitor_icon_invincibility"
+	}
+	
+	else if type == 0x09
+	{
+		return "monitor_icon_super"
+	}
+	
+	else if type == 0x0b
+	{
+		return "monitor_icon_classicshield"
+	}
+	
+	// Monitors + compatibility
+	if Mods.isModActive("Monitors +")
+	{
+		bool option.type_rand
+		
+		if (option.type_rand == 1 && Game.getSetting(SETTING_RANDOM_MONITORS) == 2 && type != 0x00 && !debug_mode.state && objA0.value39 != 0x01) || type == 0x0d
+		{
+			return "monitor_icon_random"            
+		}
+	
+		else if type == 0x0e						
+		{
+			return "monitor_icon_random_ring"
+		}
+		
+		else if type == 0x0f				
+		{
+			return "monitor_icon_hyper_ring"
+		}
+		
+		else if type == 0x20						
+		{
+			return "monitor_icon_multi_ring"
+		}
+		
+		else if type == 0x21
+		{
+			return "monitor_icon_grey_sneakers"
+		}
+		
+		else if type == 0x22	
+		{
+			return "monitor_icon_gold_shield"
+		}
+		
+		else if type == 0x23			
+		{
+			return "monitor_icon_ice_shield"
+		}
+		else if type == 0x24						
+		{
+			return "monitor_icon_goggles"
+		}
+		
+		else if type == 0x25
+		{
+			return "monitor_icon_wind_shield"
+		}
+		
+		else if type == 0x26
+		{
+			return "monitor_icon_orbinaut_shield"
+		}
+	}
+	
+	if type == 0x2A || type == GetMonitorReplacementID(Config.MonitorReplacement)
+	{
+		return "monitor_icon_health"
+	}
+
+	return 0
+}
+
+//# address-hook(0x01d5dc) end(0x01d616)
+function void MonitorIntact.UpdateDefault()
+{
+	base.MonitorIntact.UpdateDefault()
+	
+	u8 ShieldMonitors = (objA0.subtype2c == 0x05 || objA0.state == 0x05) || (objA0.subtype2c == 0x06 || objA0.state == 0x06) || (objA0.subtype2c == 0x07 || objA0.state == 0x07) || (objA0.subtype2c == 0x0b || objA0.state == 0x0b)
+	u8 MonitorsPlus.ShieldMonitors = ((objA0.subtype2c == 0x22 || objA0.state == 0x22) || (objA0.subtype2c == 0x23 || objA0.state == 0x23) || (objA0.subtype2c == 0x25 || objA0.state == 0x25) || (objA0.subtype2c == 0x26 || objA0.state == 0x26)) && Mods.isModActive("Monitors +") // Monitors + compatibility
+	
+	// Monitor replacement
+	if Config.HealthRegenerationType == 0x00 && ((objA0.subtype2c == GetMonitorReplacementID(Config.MonitorReplacement) || objA0.state == GetMonitorReplacementID(Config.MonitorReplacement)) || ((ShieldMonitors || MonitorsPlus.ShieldMonitors) && GetMonitorReplacementID(Config.MonitorReplacement) == 0xFF) || objA0.subtype2c == 0x2A)	
+	{	
+		objA0.subtype2c = 0x2A
+		objA0.state = 0x01
+	}
+}
+
+//# address-hook(0x01d820) end(0x01d878)
+function void ItemEffect.UpdateDefaultInternal()
+{
+	objA0.value39 = 0x01
+	
+	if (objA0.subtype2c == 0x2A || objA0.state == 0x2A)
+	{
+		if ((objA0.render_flags & render_flag.FLIP_Y) == 0)
+		{
+			if (objA0.velocity.y < 0)
+			{
+				UpdateMovementStraightSimple()
+				objA0.velocity.y += 0x18
+				return
+			}
+		}
+		else
+		{
+			if (objA0.velocity.y >= 0)
+			{
+				UpdateMovementStraightSimple()
+				objA0.velocity.y -= 0x18
+				return
+			}
+		}
+		
+		objA0.base_state += 2
+		u16[A0 + 0x24] = 0x1d
+
+		A1 = 0xffff0000 + objA0.monitor.character_address
+		A2 = (A1 == 0xffffb000) ? 0xfffffecc : 0xfffffece		// Address to keep count of broken monitors in. having different ones for each player is a leftover from Sonic 2
+		
+		++u16[A2]
+
+		AddHealthCount()
+	}
+	
+	else
+	{
+		base.ItemEffect.UpdateDefaultInternal()
+	}
+}
+
+function void ItemEffect.applyShield(u8 shieldType, u32 updateRoutine, u8 soundId)
+{
+	u8 ShieldMonitors = (objA0.subtype2c == 0x05 || objA0.state == 0x05) || (objA0.subtype2c == 0x06 || objA0.state == 0x06) || (objA0.subtype2c == 0x07 || objA0.state == 0x07) || (objA0.subtype2c == 0x0b || objA0.state == 0x0b)
+	u8 MonitorsPlus.ShieldMonitors = ((objA0.subtype2c == 0x22 || objA0.state == 0x22) || (objA0.subtype2c == 0x23 || objA0.state == 0x23) || (objA0.subtype2c == 0x25 || objA0.state == 0x25) || (objA0.subtype2c == 0x26 || objA0.state == 0x26)) && Mods.isModActive("Monitors +") // Monitors + compatibility
+	u8 ShieldType = char.bonus.ANY_SHIELD && u8[0xffffb02b] & char.bonus.ALL_SHIELDS // (char.bonus.SHIELD_FIRE && u8[0xffffb02b] & char.bonus.SHIELD_FIRE) || (char.bonus.SHIELD_LIGHTNING && u8[0xffffb02b] & char.bonus.SHIELD_LIGHTNING) || (char.bonus.SHIELD_BUBBLE && u8[0xffffb02b] & char.bonus.SHIELD_BUBBLE) || (0 && u8[0xffffb02b] & char.bonus.ANY_SHIELD)
+	
+	// Makes it so if you get another shield while already having one, your health count increases.
+	if !ShieldType && Config.MonitorReplacement == 0x00
+	{
+		HealthCount = HealthCount
+	}
+	
+	else if (GetMonitorReplacementID(Config.MonitorReplacement) != 0xFF || ShieldType) && HealthCount <= Config.TotalHealthCount && Config.MonitorReplacement == 0x00
+	{
+		AddHealthCount()
+	}
+	
+	base.ItemEffect.applyShield(shieldType, updateRoutine, soundId)
+}
+
+//# address-hook(0x01a596) end(0x01a5e8)
+function void CollectRing()
+{
+	base.CollectRing()
+
+	RingsCollected += 1
+
+	if Config.HealthRegenerationType == 0x01 && RingsCollected >= Config.RingRequirement
+	{
+		AddHealthCount()
+	}
+}	
+
+//# address-hook(0x01d8ac) end(0x01d906)
+function void ItemEffect.ApplyExtraRings()
+{
+	base.ItemEffect.ApplyExtraRings()
+
+	RingsCollected += 10
+
+	if Config.HealthRegenerationType == 0x01 && RingsCollected >= Config.RingRequirement
+	{
+		AddHealthCount()
+	}
+}
+
+//# address-hook(0x061794) end(0x0617b2)
+function void GiantRing.Grant50Rings()
+{
+	base.GiantRing.Grant50Rings()
+
+	RingsCollected += 50
+
+	if Config.HealthRegenerationType == 0x01 && RingsCollected >= Config.RingRequirement
+	{
+		AddHealthCount()
+	}
+}
+
+/*
+// Monitors + compatibility
+function void applyRandomRings()
+{
+	if Mods.isModActive("Monitors +")
+	{
+		u8 amount
+		u8 random = System.rand() % 100
+
+		if random <= 20
+		{
+			amount = 1
+		}
+
+		else if random <= 50
+		{
+			amount = 5
+		}
+
+		else if random <= 70
+		{
+			amount = 10
+		}
+
+		else if random <= 90
+		{
+			amount = 30
+		}
+
+		RingsCollected += amount
+
+		if Config.HealthRegenerationType == 0x01 && RingsCollected >= Config.RingRequirement
+		{
+			AddHealthCount()
+		}
+
+		base.applyRandomRings()
+	}
+}
+
+function void applyMultiRing()
+{
+	if Mods.isModActive("Monitors +")
+	{
+		u8 amount
+		amount = option.value_20
+		RingsCollected += amount
+
+		if Config.HealthRegenerationType == 0x01 && RingsCollected >= Config.RingRequirement
+		{
+			AddHealthCount()
+		}
+
+		base.applyMultiRing()
+	}
+}
+*/
+
+// Bonus game balls - Shared between Gumball Machine and Glowing Spheres bonus games
+
+// Extra life ball
+//# address-hook(0x061120) end(0x06112a)
+function void fn061120()
+{
+	bool IsExtraLifeMonitorReplaced = Config.HealthRegenerationType == 0x00 && GetMonitorReplacementID(Config.MonitorReplacement) == 0x01
+
+	if IsExtraLifeMonitorReplaced
+	{
+		AddHealthCount()
+	}
+	
+	else
+	{
+		base.fn061120()
+	}
+}
+
+// Rings ball
+//# address-hook(0x06114e) end(0x061156)
+function void fn06114e()
+{
+	bool IsRingsMonitorReplaced = Config.HealthRegenerationType == 0x00 && GetMonitorReplacementID(Config.MonitorReplacement) == 0x03
+
+	if IsRingsMonitorReplaced
+	{
+		AddHealthCount()
+	}
+
+	else if Config.HealthRegenerationType == 0x01
+	{
+		AddHealthCount()
+		base.fn06114e()
+	}
+
+	else
+	{
+		base.fn06114e()
+	}
+}
+
+// Fire shield ball
+//# address-hook(0x0611d6) end(0x0611fa)
+function void fn0611d6()
+{
+	bool IsFireShieldMonitorReplaced = Config.HealthRegenerationType == 0x00 && (GetMonitorReplacementID(Config.MonitorReplacement) == 0x05 || GetMonitorReplacementID(Config.MonitorReplacement) == 0xFF)
+	u8 ShieldType = char.bonus.ANY_SHIELD && u8[0xffffb02b] & char.bonus.ALL_SHIELDS // (char.bonus.SHIELD_FIRE && u8[0xffffb02b] & char.bonus.SHIELD_FIRE) || (char.bonus.SHIELD_LIGHTNING && u8[0xffffb02b] & char.bonus.SHIELD_LIGHTNING) || (char.bonus.SHIELD_BUBBLE && u8[0xffffb02b] & char.bonus.SHIELD_BUBBLE) || (0 && u8[0xffffb02b] & char.bonus.ANY_SHIELD)
+
+	if Config.HealthRegenerationType == 0x00
+	{
+		if !ShieldType && Config.MonitorReplacement == 0x00
+		{
+			base.fn0611d6()
+			HealthCount = HealthCount
+		}
+
+		else if ShieldType
+		{
+			base.fn0611d6()
+			AddHealthCount()
+		}
+
+		if IsFireShieldMonitorReplaced
+		{
+			AddHealthCount()
+		}
+	}
+
+	else
+	{
+		base.fn0611d6()
+	}
+}
+
+// Lightning shield ball
+//# address-hook(0x06122a) end(0x06124e)
+function void fn06122a()
+{
+	bool IsLightningShieldMonitorReplaced = Config.HealthRegenerationType == 0x00 && (GetMonitorReplacementID(Config.MonitorReplacement) == 0x06 || GetMonitorReplacementID(Config.MonitorReplacement) == 0xFF)
+	u8 ShieldType = char.bonus.ANY_SHIELD && u8[0xffffb02b] & char.bonus.ALL_SHIELDS // (char.bonus.SHIELD_FIRE && u8[0xffffb02b] & char.bonus.SHIELD_FIRE) || (char.bonus.SHIELD_LIGHTNING && u8[0xffffb02b] & char.bonus.SHIELD_LIGHTNING) || (char.bonus.SHIELD_BUBBLE && u8[0xffffb02b] & char.bonus.SHIELD_BUBBLE) || (0 && u8[0xffffb02b] & char.bonus.ANY_SHIELD)
+
+	if Config.HealthRegenerationType == 0x00
+	{
+		if !ShieldType && Config.MonitorReplacement == 0x00
+		{
+			base.fn06122a()
+			HealthCount = HealthCount
+		}
+
+		else if ShieldType
+		{
+			base.fn06122a()
+			AddHealthCount()
+		}
+
+		if IsLightningShieldMonitorReplaced
+		{
+			AddHealthCount()
+		}
+	}
+
+	else
+	{
+		base.fn06122a()
+	}
+}
+
+// Bubble shield ball
+//# address-hook(0x061200) end(0x061224)
+function void fn061200()
+{
+	bool IsBubbleShieldMonitorReplaced = Config.HealthRegenerationType == 0x00 && (GetMonitorReplacementID(Config.MonitorReplacement) == 0x07 || GetMonitorReplacementID(Config.MonitorReplacement) == 0xFF)
+	u8 ShieldType = char.bonus.ANY_SHIELD && u8[0xffffb02b] & char.bonus.ALL_SHIELDS // (char.bonus.SHIELD_FIRE && u8[0xffffb02b] & char.bonus.SHIELD_FIRE) || (char.bonus.SHIELD_LIGHTNING && u8[0xffffb02b] & char.bonus.SHIELD_LIGHTNING) || (char.bonus.SHIELD_BUBBLE && u8[0xffffb02b] & char.bonus.SHIELD_BUBBLE) || (0 && u8[0xffffb02b] & char.bonus.ANY_SHIELD)
+
+	if Config.HealthRegenerationType == 0x00
+	{
+		if !ShieldType && Config.MonitorReplacement == 0x00
+		{
+			base.fn061200()
+			HealthCount = HealthCount
+		}
+
+		else if ShieldType
+		{
+			base.fn061200()
+			AddHealthCount()
+		}
+
+		if IsBubbleShieldMonitorReplaced
+		{
+			AddHealthCount()
+		}
+	}
+
+	else
+	{
+		base.fn061200()
+	}
+}
