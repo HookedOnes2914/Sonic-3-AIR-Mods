@@ -4,9 +4,27 @@
 		"Name": "Health System",
 		"UniqueID": "HealthSystem",
 		"Author": "Hooked",
-		"Description": "Replaces the ring loss system with a health system inspired by other platformers -- and games in general -- to satisfy that HATE for rings you have!",
+		"Description": "Replaces the ring loss system with a health system inspired by other platformers -- and games in general -- to satisfy that HATE for rings you have! \n \n ...unless you love rings AND health... gross...",
 		"ModVersion": "2.0"
 	},
+
+	"OtherMods":
+	{
+		"Chaotix-Item-Effect":
+		{
+			"DisplayName": "Chaotix Item Effect",
+			"IsRequired": "0",
+			"Priority": "Higher"
+		},
+
+		"dynamic-lemons-boss-rush":
+		{
+			"DisplayName": "Boss Rush",
+			"IsRequired": "0",
+			"Priority": "Lower"
+		}
+	},
+
 	"Settings":
 	{
 		"List":
@@ -67,19 +85,6 @@
 				"DisplayName": "Show Unobtained Hit Points",
 				"Variable": "Config.ShowUnobtainedHealthCount",
 				"Category": "Health",
-				"DefaultValue": "0x01",
-				"Options":
-				{
-					"0x00": "No",
-					"0x01": "Yes"
-				}
-			},
-			
-			{
-				"InternalName": "CanLoseRings",
-				"DisplayName": "Lose Rings When Hit",
-				"Variable": "Config.CanLoseRings",
-				"Category": "Gameplay",
 				"DefaultValue": "0x00",
 				"Options":
 				{
@@ -87,13 +92,71 @@
 					"0x01": "Yes"
 				}
 			},
+
+			{
+				"InternalName": "HealthRegenerationType",
+				"DisplayName": "Health Regeneration Type",
+				"Variable": "Config.HealthRegenerationType",
+				"Category": "Gameplay",
+				"DefaultValue": "0x00",
+				"Options":
+				{
+					"0x00": "Monitors",
+					"0x01": "Rings"
+				}
+			},
 			
 			{
-				"InternalName": "ReplaceShieldMonitor",
-				"DisplayName": "Replace Shield Monitors",
-				"Variable": "Config.ReplaceShieldMonitor",
+				"InternalName": "MonitorReplacement",
+				"DisplayName": "Monitor Replacement",
+				"Variable": "Config.MonitorReplacement",
 				"Category": "Gameplay",
 				"DefaultValue": "0x01",
+				"Options":
+				{
+					"0x00": "None", // Health Monitor ID - 0x2A
+					"0x01": "All Shields", // 0xFF
+					"0x02": "Extra Life",
+					"0x03": "Robotnik",
+					"0x04": "Rings",
+					"0x05": "Speed Shoes",
+					"0x06": "Fire Shield",
+					"0x07": "Lightning Shield",
+					"0x08": "Bubble Shield", 
+					"0x09": "Classic Shield", // 0x0B
+					"0x0A": "Invincibility", // 0x08
+					"0x0B": "Super" // 0x09
+				}
+			},
+
+			{
+				"InternalName": "RingRequirement",
+				"DisplayName": "Ring Requirement",
+				"Variable": "Config.RingRequirement",
+				"Category": "Gameplay",
+				"DefaultValue": "0x32",
+				"Options":
+				{
+					"0x0A": "10 Rings",
+					"0x14": "20 Rings",
+					"0x19": "25 Rings",
+					"0x1E": "30 Rings",
+					"0x32": "50 Rings",
+					"0x4B": "75 Rings",
+					"0x64": "100 Rings",
+					"0x7D": "125 Rings",
+					"0x96": "150 Rings",
+					"0xAF": "175 Rings",
+					"0xCB": "200 Rings"
+				}
+			},
+
+			{
+				"InternalName": "CanLoseRings",
+				"DisplayName": "Lose Rings When Hit",
+				"Variable": "Config.CanLoseRings",
+				"Category": "Gameplay",
+				"DefaultValue": "0x00",
 				"Options":
 				{
 					"0x00": "No",

@@ -7,6 +7,7 @@ global u8 Config.HealthDisplayType
 global bool Config.ShowUnobtainedHealthCount
 
 // Gameplay category
+global u8 Config.HealthRegenerationType
+global u8 Config.MonitorReplacement
+global u8 Config.RingRequirement
 global bool Config.CanLoseRings
-global bool Config.ReplaceShieldMonitor
-// global bool Config.ShieldAddHealthMethod
