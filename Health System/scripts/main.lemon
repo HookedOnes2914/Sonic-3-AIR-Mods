@@ -13,6 +13,7 @@ global u16 RingsCollected
 
 #define HEALTH_SYSTEM_ACTIVE = 1
 
+/*
 function void waitForNextFrame() // Debug logs are always being updated
 {
     base.waitForNextFrame()
@@ -36,6 +37,7 @@ function void waitForNextFrame() // Debug logs are always being updated
 	debugLog(stringformat("ring_counter: %d", ring_counter))
 	debugLog(stringformat("RingsCollected: %d", RingsCollected))
 }
+*/
 
 // Set health count when spawning / respawning
 function void initializeMainGame()
