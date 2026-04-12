@@ -13,7 +13,6 @@ global u16 RingsCollected
 
 #define HEALTH_SYSTEM_ACTIVE = 1
 
-/*
 function void waitForNextFrame() // Debug logs are always being updated
 {
     base.waitForNextFrame()
@@ -37,7 +36,6 @@ function void waitForNextFrame() // Debug logs are always being updated
 	debugLog(stringformat("ring_counter: %d", ring_counter))
 	debugLog(stringformat("RingsCollected: %d", RingsCollected))
 }
-*/
 
 // Set health count when spawning / respawning
 function void initializeMainGame()
@@ -121,7 +119,7 @@ function void AddHealthCount()
 		}
 	}
 		
-	if HealthCount <= Config.TotalHealthCount || BonusGame.HealthCount <= Config.TotalHealthCount
+	if HealthCount <= Config.TotalHealthCount || (BonusGame.HealthCount <= Config.TotalHealthCount && global.stage_type == 2 && global.in_extra_stage == 1)
 	{
 		playSound(0x65)	 // Bonus game ball appear sound
 	}
