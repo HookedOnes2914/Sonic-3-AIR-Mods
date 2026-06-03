@@ -1,0 +1,37 @@
+#define UBGTCMWAELNBICTOASNL_ACTIVE = 1
+
+function bool Standalone.onWriteToSpriteTable(s16 px, s16 py, u16 renderQueue)
+{
+	if (objA0.mapping_offset == 0x02EE10)
+	{
+		if (objA0.animation.sprite == 0x12 || objA0.animation.sprite == 0x13)
+		{
+			string key
+
+            if global.zone == 0x13
+            {
+                key = "TitleCard_GumballMachine"
+            }
+
+            if global.zone == 0x14
+            {
+                key = "TitleCard_GlowingSpheres"
+            }
+
+            if global.zone == 0x15
+            {
+                key = "TitleCard_SlotMachine"
+            }
+
+            Renderer.drawCustomSprite(key, px, py, 0, SPRITE_FLAG_PRIO | SPRITE_FLAG_NO_GLOBAL_TINT, renderQueue)
+			return true
+		}
+
+		else if (objA0.animation.sprite == 0x14)
+		{
+			return true
+		}
+	}
+
+	return base.Standalone.onWriteToSpriteTable(px, py, renderQueue)
+}

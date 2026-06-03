@@ -1,0 +1,5 @@
+{
+	"TitleCard_GumballMachine":  { "File": "sprites.bmp", "Rect": "1,1,224,24", "Center": "24,0" },
+	"TitleCard_GlowingSpheres":  { "File": "sprites.bmp", "Rect": "1,26,232,24", "Center": "28,0" },
+	"TitleCard_SlotMachine":  { "File": "sprites.bmp", "Rect": "1,51,184,24", "Center": "4,0" }
+}
